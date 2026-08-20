@@ -1,4 +1,4 @@
-defmodule Lipaharaka.Accounts.Otp do
+defmodule Lipaharaka.Accounts.OTP do
   @moduledoc """
 
   """
