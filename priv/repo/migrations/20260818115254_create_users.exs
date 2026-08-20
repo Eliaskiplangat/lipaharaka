@@ -1,4 +1,4 @@
-defmodule Lipaharaka.Repo.Migrations.CreateBusinesses do
+defmodule Lipaharaka.Repo.Migrations.CreateUsers do
     create table(:users, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :phone_number, :string, null: false
