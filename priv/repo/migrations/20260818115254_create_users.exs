@@ -1,4 +1,7 @@
 defmodule Lipaharaka.Repo.Migrations.CreateUsers do
+  use Ecto.Migration
+
+    def change do
     create table(:users, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :phone_number, :string, null: false
@@ -13,3 +16,4 @@ defmodule Lipaharaka.Repo.Migrations.CreateUsers do
 
     create unique_index(:users, [:phone_number])
   end
+end
