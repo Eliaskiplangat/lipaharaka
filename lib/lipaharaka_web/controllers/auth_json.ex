@@ -25,6 +25,11 @@ defmodule LipaharakaWeb.AuthJSON do
     }
   end
 
+    @doc "Rendered by GET /api/me."
+  def me(%{user: user}) do
+    %{user: user_summary(user)}
+  end
+
   @doc "Rendered when an Ecto changeset fails validation (e.g. registration)."
   def changeset_error(%{changeset: changeset}) do
     %{errors: Ecto.Changeset.traverse_errors(changeset, &translate_error/1)}
