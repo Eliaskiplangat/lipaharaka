@@ -2,6 +2,7 @@ defmodule LipaharakaWeb.AuthController do
   use LipaharakaWeb, :controller
 
   alias Lipaharaka.Accounts
+  alias LipaharakaWeb.Auth.Token
 
 
   def register(conn, params) do
@@ -22,7 +23,7 @@ defmodule LipaharakaWeb.AuthController do
   def verify_otp(conn, %{"phone_number" => phone, "otp" => otp}) do
     case Accounts.verify_otp(phone, otp) do
       {:ok, user} ->
-        render(conn, :verified, user: user)
+        render(conn, :verified, user: user, token: Token.sign(user.id))
 
       {:error, reason} ->
         conn
@@ -31,8 +32,9 @@ defmodule LipaharakaWeb.AuthController do
     end
   end
 
-
   def verify_otp(conn, _params), do: bad_request(conn, "phone_number and otp are required")
+
+
   def resend_otp(conn, %{"phone_number" => phone}) do
     with {:ok, normalized} <- Lipaharaka.Accounts.PhoneNumber.normalize(phone),
          %Lipaharaka.Accounts.User{} = user <- Accounts.get_user_by_phone(normalized) do
@@ -51,10 +53,11 @@ defmodule LipaharakaWeb.AuthController do
 
   def resend_otp(conn, _params), do: bad_request(conn, "phone_number is required")
 
+
   def login(conn, %{"phone_number" => phone, "password" => password}) do
     case Accounts.authenticate(phone, password) do
       {:ok, user} ->
-        render(conn, :logged_in, user: user)
+        render(conn, :logged_in, user: user, token: Token.sign(user.id))
 
       {:error, :phone_not_verified} ->
         conn
@@ -69,6 +72,10 @@ defmodule LipaharakaWeb.AuthController do
   end
 
   def login(conn, _params), do: bad_request(conn, "phone_number and password are required")
+
+  def me(conn, _params) do
+    render(conn, :me, user: conn.assigns.current_user)
+  end
 
   defp bad_request(conn, message) do
     conn
