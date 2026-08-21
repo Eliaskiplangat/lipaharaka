@@ -5,15 +5,25 @@ defmodule LipaharakaWeb.Router do
     plug :accepts, ["json"]
   end
 
+ pipeline :authenticated do
+    plug LipaharakaWeb.Plugs.RequireAuth
+  end
+
   scope "/api", LipaharakaWeb do
     pipe_through :api
 
     get "/health", HealthController, :index
 
-
-    # Step 2 will add here:
-    #   post "/auth/register", AuthController, :register
-    #   post "/auth/verify_otp", AuthController, :verify_otp
-    #   post "/auth/login", AuthController, :login
+    post "/auth/register", AuthController, :register
+    post "/auth/verify_otp", AuthController, :verify_otp
+    post "/auth/resend_otp", AuthController, :resend_otp
+    post "/auth/login", AuthController, :login
   end
-end
+
+  scope "/api", LipaharakaWeb do
+    pipe_through [:api, :authenticated]
+
+    get "/me", AuthController, :me
+
+  end
+  end
