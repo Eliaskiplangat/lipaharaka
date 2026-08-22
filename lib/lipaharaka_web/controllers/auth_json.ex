@@ -1,7 +1,7 @@
 defmodule LipaharakaWeb.AuthJSON do
   alias Lipaharaka.Accounts.User
 
-  @doc "Rendered after successful registration — OTP has been sent, not yet verified."
+
   def registered(%{user: user}) do
     %{
       user: user_summary(user),
@@ -9,33 +9,34 @@ defmodule LipaharakaWeb.AuthJSON do
     }
   end
 
-  @doc "Rendered after successful OTP verification."
-  def verified(%{user: user}) do
+
+  def verified(%{user: user, token: token}) do
     %{
       user: user_summary(user),
+      token: token,
       message: "Phone number verified."
     }
   end
 
-  @doc "Rendered after successful login."
-  def logged_in(%{user: user}) do
+
+  def logged_in(%{user: user, token: token}) do
     %{
       user: user_summary(user),
+      token: token,
       message: "Login successful."
     }
   end
 
-    @doc "Rendered by GET /api/me."
   def me(%{user: user}) do
     %{user: user_summary(user)}
   end
 
-  @doc "Rendered when an Ecto changeset fails validation (e.g. registration)."
+
   def changeset_error(%{changeset: changeset}) do
     %{errors: Ecto.Changeset.traverse_errors(changeset, &translate_error/1)}
   end
 
-  @doc "Rendered when OTP verification fails."
+
   def otp_error(%{reason: reason}) do
     %{errors: %{otp: otp_error_message(reason)}}
   end
