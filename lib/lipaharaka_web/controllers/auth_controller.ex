@@ -5,6 +5,7 @@ defmodule LipaharakaWeb.AuthController do
   alias LipaharakaWeb.Auth.Token
 
 
+
   def register(conn, params) do
     case Accounts.register_user(params) do
       {:ok, user} ->
@@ -53,7 +54,6 @@ defmodule LipaharakaWeb.AuthController do
 
   def resend_otp(conn, _params), do: bad_request(conn, "phone_number is required")
 
-
   def login(conn, %{"phone_number" => phone, "password" => password}) do
     case Accounts.authenticate(phone, password) do
       {:ok, user} ->
@@ -72,6 +72,7 @@ defmodule LipaharakaWeb.AuthController do
   end
 
   def login(conn, _params), do: bad_request(conn, "phone_number and password are required")
+
 
   def me(conn, _params) do
     render(conn, :me, user: conn.assigns.current_user)
