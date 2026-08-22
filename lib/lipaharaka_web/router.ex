@@ -5,7 +5,8 @@ defmodule LipaharakaWeb.Router do
     plug :accepts, ["json"]
   end
 
- pipeline :authenticated do
+
+  pipeline :authenticated do
     plug LipaharakaWeb.Plugs.RequireAuth
   end
 
@@ -25,5 +26,6 @@ defmodule LipaharakaWeb.Router do
 
     get "/me", AuthController, :me
 
+
   end
-  end
+end
