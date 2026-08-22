@@ -5,7 +5,9 @@ defmodule LipaharakaWeb.Router do
     plug :accepts, ["json"]
   end
 
-
+  # Composed with :api (see pipe_through [:api, :authenticated] below).
+  # Verifies the bearer token and assigns conn.assigns.current_user, or
+  # halts the request with a 401 before it reaches the controller.
   pipeline :authenticated do
     plug LipaharakaWeb.Plugs.RequireAuth
   end
@@ -26,6 +28,11 @@ defmodule LipaharakaWeb.Router do
 
     get "/me", AuthController, :me
 
+    post "/businesses", BusinessController, :create
+    get "/businesses/me", BusinessController, :show
+    patch "/businesses/me", BusinessController, :update
 
+    # Step 5 will add here: KYC document upload
+    #   post "/businesses/me/kyc_documents", KycDocumentController, :create
   end
 end
