@@ -20,10 +20,8 @@ defmodule Lipaharaka.MixProject do
     ]
   end
 
-
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
-
 
   defp deps do
     [
@@ -35,8 +33,15 @@ defmodule Lipaharaka.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
+      # Password hashing for user auth
       {:bcrypt_elixir, "~> 3.1"},
-      {:req, "~> 0.5"}
+      # HTTP client used by the Africa's Talking SMS adapter
+      {:req, "~> 0.5"},
+      # S3-compatible object storage for KYC document uploads
+      {:ex_aws, "~> 2.5"},
+      {:ex_aws_s3, "~> 2.5"},
+      {:hackney, "~> 1.20"},
+      {:sweet_xml, "~> 0.7"}
     ]
   end
 
