@@ -32,7 +32,10 @@ defmodule LipaharakaWeb.Router do
     get "/businesses/me", BusinessController, :show
     patch "/businesses/me", BusinessController, :update
 
-    # Step 5 will add here: KYC document upload
-    #   post "/businesses/me/kyc_documents", KycDocumentController, :create
+    post "/businesses/me/kyc_documents", KycDocumentController, :create
+    get "/businesses/me/kyc_documents", KycDocumentController, :index
+
+    # Step 6 will add here: Admin KYC review
+    #   patch "/admin/businesses/:id/kyc", AdminController, :review_kyc
   end
 end
