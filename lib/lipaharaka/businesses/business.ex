@@ -16,6 +16,7 @@ defmodule Lipaharaka.Businesses.Business do
     field :kyc_status, :string, default: "pending"
 
     belongs_to :user, Lipaharaka.Accounts.User
+    has_many :kyc_documents, Lipaharaka.Businesses.KycDocument
 
     timestamps(type: :utc_datetime)
   end
