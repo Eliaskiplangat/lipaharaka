@@ -12,6 +12,14 @@ defmodule LipaharakaWeb.Router do
     plug LipaharakaWeb.Plugs.RequireAuth
   end
 
+  # Composed with [:api, :authenticated] — RequireAdmin runs AFTER
+  # RequireAuth, so conn.assigns.current_user is guaranteed present by
+  # the time it checks the role. A non-admin gets a 403 here, distinct
+  # from the 401 an unauthenticated request gets from :authenticated.
+  pipeline :admin do
+    plug LipaharakaWeb.Plugs.RequireAdmin
+  end
+
   scope "/api", LipaharakaWeb do
     pipe_through :api
 
@@ -34,8 +42,15 @@ defmodule LipaharakaWeb.Router do
 
     post "/businesses/me/kyc_documents", KycDocumentController, :create
     get "/businesses/me/kyc_documents", KycDocumentController, :index
+  end
 
-    # Step 6 will add here: Admin KYC review
-    #   patch "/admin/businesses/:id/kyc", AdminController, :review_kyc
+  scope "/api/admin", LipaharakaWeb do
+    pipe_through [:api, :authenticated, :admin]
+
+    get "/kyc_documents/pending", Admin.KycDocumentController, :pending
+    patch "/kyc_documents/:id", Admin.KycDocumentController, :review
+
+    # Step 7 will add here: invoicing (FR-2.x)
+    #   post "/invoices", InvoiceController, :create
   end
 end
