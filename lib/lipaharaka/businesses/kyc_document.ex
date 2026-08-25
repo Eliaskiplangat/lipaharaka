@@ -8,6 +8,7 @@ defmodule Lipaharaka.Businesses.KycDocument do
   @document_types ~w(national_id certificate_of_registration kra_pin_certificate mpesa_statement)
   @allowed_content_types ~w(image/jpeg image/png application/pdf)
   @max_file_size_bytes 5 * 1024 * 1024
+  @review_statuses ~w(approved rejected)
 
   schema "kyc_documents" do
     field :document_type, :string
@@ -71,6 +72,20 @@ defmodule Lipaharaka.Businesses.KycDocument do
     |> foreign_key_constraint(:business_id)
     |> unique_constraint([:business_id, :document_type],
       message: "already uploaded — delete the existing one first to replace it"
+    )
+  end
+
+  @doc """
+  Changeset for an Admin review decision. `status` must be `"approved"`
+  or `"rejected"` — there is no changeset path back to `"pending"`
+  from here; that only happens implicitly via a fresh upload
+  (`Lipaharaka.Businesses.upload_kyc_document/3` resets it).
+  """
+  def review_changeset(document, status, review_note) when status in @review_statuses do
+    change(document,
+      status: status,
+      review_note: review_note,
+      reviewed_at: DateTime.utc_now() |> DateTime.truncate(:second)
     )
   end
 end
