@@ -448,3 +448,111 @@ environment variables and wires up the real `S3` adapter automatically.
 
 The Admin role/permission concept, and the first Admin-only endpoint:
 reviewing and approving/rejecting a business's KYC documents (FR-1.4).
+
+---
+
+## Step 6: Admin role + KYC review
+
+**New in this step:**
+
+- `role` column on `users` (`"sme"` / `"admin"`, defaults to `"sme"`).
+  **Not settable by the client** — it's absent from
+  `registration_changeset`'s cast list entirely, so even a malicious
+  `{"role": "admin"}` in a registration request is silently ignored
+  (see `test/lipaharaka/accounts_role_test.exs`).
+- `Accounts.promote_to_admin/1` — the only way to create an admin
+  right now is via `iex`, on purpose (see "Creating an admin" below).
+- `LipaharakaWeb.Plugs.RequireAdmin` — composed after `RequireAuth` in
+  a new `:admin` pipeline. Distinguishes 401 (not logged in) from 403
+  (logged in, not an admin) — genuinely different situations.
+- `Lipaharaka.Admin` context — the one deliberate exception to "never
+  fetch by raw ID" that the rest of the codebase follows (see its
+  moduledoc for why that's safe here specifically).
+- Two endpoints, behind `:admin`:
+  - `GET /api/admin/kyc_documents/pending` — FIFO review queue, each
+    document preloaded with its business and the owner's phone number
+  - `PATCH /api/admin/kyc_documents/:id` — `{"decision": "approved" |
+    "rejected", "review_note": "..."}` (note optional)
+- Reviewing a document **automatically recomputes** the business's
+  overall `kyc_status` (`Businesses.refresh_kyc_status/1`): rejected
+  if any document is rejected, approved only once every document is
+  approved, pending otherwise.
+
+### New files
+
+```
+priv/repo/migrations/20260821080000_add_role_to_users.exs
+lib/lipaharaka_web/plugs/require_admin.ex
+lib/lipaharaka/admin.ex
+lib/lipaharaka_web/controllers/admin/kyc_document_controller.ex
+lib/lipaharaka_web/controllers/admin/kyc_document_json.ex
+test/lipaharaka_web/plugs/require_admin_test.exs
+test/lipaharaka/admin_test.exs
+test/lipaharaka_web/controllers/admin/kyc_document_controller_test.exs
+test/lipaharaka/accounts_role_test.exs
+```
+
+### Modified files
+
+```
+lib/lipaharaka/accounts/user.ex        (role field)
+lib/lipaharaka/accounts.ex             (promote_to_admin/1)
+lib/lipaharaka/businesses/kyc_document.ex  (review_changeset/3)
+lib/lipaharaka/businesses.ex           (refresh_kyc_status/1)
+lib/lipaharaka_web/router.ex           (:admin pipeline, /api/admin routes)
+```
+
+No new dependencies. Run the migration:
+
+```bash
+mix ecto.migrate
+```
+
+### Creating an admin (no API endpoint — deliberately)
+
+```bash
+iex -S mix
+```
+```elixir
+alias Lipaharaka.Accounts
+user = Accounts.get_user_by_phone("+254700000000")  # must already be registered + verified
+{:ok, admin} = Accounts.promote_to_admin(user)
+```
+
+### Trying it out
+
+```bash
+ADMIN_TOKEN="token-for-your-promoted-admin-user"
+
+curl http://localhost:4000/api/admin/kyc_documents/pending \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+curl -X PATCH http://localhost:4000/api/admin/kyc_documents/DOCUMENT_ID \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{"decision": "approved", "review_note": "Clear ID photo, matches business name"}'
+```
+
+Trying the same requests with a non-admin's token should return 403;
+with no token at all, 401.
+
+### What's deliberately NOT here yet
+
+- **No admin signup/invite flow.** Every admin is created by direct
+  DB/iex intervention. Fine for a small team running this themselves;
+  would need a real invite/audit flow before handing admin access to
+  a larger operations team.
+- **No audit log of review decisions.** We record `reviewed_at` and
+  `review_note` on the document itself, but not a durable, append-only
+  log of "admin X did Y at time Z" — worth adding before this is
+  handling real regulatory-sensitive decisions (see FSD Section 15,
+  audit logging as a compliance requirement).
+- **No way to un-approve/re-open a review.** Once a document is
+  `approved` or `rejected`, the only way back to `pending` is the SME
+  re-uploading a new file for that document type.
+
+### Next step (Step 7)
+
+Core invoicing (FR-2.x): SMEs can now be verified end-to-end
+(register → business → KYC → admin approval) — the next real feature
+is letting an approved SME actually create and send an invoice.
