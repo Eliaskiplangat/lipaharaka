@@ -156,6 +156,35 @@ defmodule Lipaharaka.Businesses do
     Storage.download_url(document.storage_key)
   end
 
+  @doc """
+  Recomputes and persists a business's `kyc_status` from the current
+  state of its KYC documents:
+
+    * `"rejected"` if any document has been rejected
+    * `"approved"` if at least one document exists and all are approved
+    * `"pending"` otherwise (no documents yet, or some still pending)
+
+  Called automatically by `Lipaharaka.Admin.review_kyc_document/3`
+  after a document review — not meant to be called directly from a
+  controller.
+  """
+  @spec refresh_kyc_status(Business.t()) :: {:ok, Business.t()} | {:error, Ecto.Changeset.t()}
+  def refresh_kyc_status(%Business{} = business) do
+    documents = list_kyc_documents(business)
+
+    status =
+      cond do
+        documents == [] -> "pending"
+        Enum.any?(documents, &(&1.status == "rejected")) -> "rejected"
+        Enum.all?(documents, &(&1.status == "approved")) -> "approved"
+        true -> "pending"
+      end
+
+    business
+    |> Business.kyc_status_changeset(status)
+    |> Repo.update()
+  end
+
   defp upsert_kyc_document(nil, attrs) do
     %KycDocument{}
     |> KycDocument.create_changeset(attrs)
