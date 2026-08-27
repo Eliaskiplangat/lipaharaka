@@ -28,8 +28,11 @@ partner, not with the platform itself.
 - **Admin review** — platform staff review and approve/reject KYC
   documents; a business's overall verification status updates
   automatically as its documents are reviewed.
-- *(In progress)* Invoicing, automated collections, M-Pesa payment
-  integration, and invoice-backed financing — see [Roadmap](#roadmap).
+- **Invoicing** — SMEs create invoices with line items, tax, and due
+  dates; server-computed totals (never trusted from the client);
+  full lifecycle (draft → sent → paid, or cancelled).
+- *(In progress)* Automated collections, M-Pesa payment integration,
+  and invoice-backed financing — see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -69,6 +72,13 @@ All endpoints are prefixed `/api`. Authenticated endpoints require an
 | PATCH | `/businesses/me` | User | Update your business |
 | POST | `/businesses/me/kyc_documents` | User | Upload a KYC document (multipart) |
 | GET | `/businesses/me/kyc_documents` | User | List your uploaded documents |
+| POST | `/invoices` | User | Create a draft invoice |
+| GET | `/invoices` | User | List your invoices |
+| GET | `/invoices/:id` | User | Fetch one invoice |
+| PATCH | `/invoices/:id` | User | Update a draft invoice |
+| POST | `/invoices/:id/send` | User | Mark an invoice as sent |
+| POST | `/invoices/:id/mark_paid` | User | Mark a sent invoice as paid |
+| POST | `/invoices/:id/cancel` | User | Cancel a draft or sent invoice |
 | GET | `/admin/kyc_documents/pending` | Admin | Review queue |
 | PATCH | `/admin/kyc_documents/:id` | Admin | Approve/reject a document |
 
@@ -138,6 +148,9 @@ The backend follows a bounded-context structure under `lib/lipaharaka/`:
 
 - **`Accounts`** — users, phone verification, authentication
 - **`Businesses`** — business profiles and KYC documents
+- **`Invoicing`** — invoices, line items, and status lifecycle; all
+  monetary values use `Decimal`, never floats, and totals are always
+  computed server-side from submitted line items
 - **`Admin`** — cross-business operations for platform staff (KYC
   review); the one deliberate exception to the rule every other
   context follows of never fetching a record by a raw client-supplied
@@ -156,7 +169,7 @@ business rules and database access.
 - [x] Business profile registration
 - [x] KYC document upload (S3-compatible storage)
 - [x] Admin KYC review
-- [ ] Invoicing (create, send, track)
+- [x] Invoicing (create, send, track lifecycle)
 - [ ] Automated payment reminders
 - [ ] M-Pesa payment integration (STK Push, C2B, B2C)
 - [ ] Risk scoring and invoice-backed financing
