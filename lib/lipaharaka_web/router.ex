@@ -42,6 +42,14 @@ defmodule LipaharakaWeb.Router do
 
     post "/businesses/me/kyc_documents", KycDocumentController, :create
     get "/businesses/me/kyc_documents", KycDocumentController, :index
+
+    post "/invoices", InvoiceController, :create
+    get "/invoices", InvoiceController, :index
+    get "/invoices/:id", InvoiceController, :show
+    patch "/invoices/:id", InvoiceController, :update
+    post "/invoices/:id/send", InvoiceController, :send_invoice
+    post "/invoices/:id/mark_paid", InvoiceController, :mark_paid
+    post "/invoices/:id/cancel", InvoiceController, :cancel
   end
 
   scope "/api/admin", LipaharakaWeb do
@@ -50,7 +58,7 @@ defmodule LipaharakaWeb.Router do
     get "/kyc_documents/pending", Admin.KycDocumentController, :pending
     patch "/kyc_documents/:id", Admin.KycDocumentController, :review
 
-    # Step 7 will add here: invoicing (FR-2.x)
-    #   post "/invoices", InvoiceController, :create
+    # A future step will add here: automated collections/reminders
+    # (FR-3.x) and M-Pesa payment integration (FR-4.x).
   end
 end
