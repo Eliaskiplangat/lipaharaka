@@ -11,9 +11,9 @@ defmodule Lipaharaka.Application do
       LipaharakaWeb.Telemetry,
       Lipaharaka.Repo,
       {Phoenix.PubSub, name: Lipaharaka.PubSub},
+      {Oban, Application.fetch_env!(:lipaharaka, Oban)},
       # Start the endpoint last, once everything else is running
       LipaharakaWeb.Endpoint
-      # Step 3 will add: {Oban, Application.fetch_env!(:lipaharaka, Oban)}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
