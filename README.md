@@ -31,8 +31,12 @@ partner, not with the platform itself.
 - **Invoicing** — SMEs create invoices with line items, tax, and due
   dates; server-computed totals (never trusted from the client);
   full lifecycle (draft → sent → paid, or cancelled).
-- *(In progress)* Automated collections, M-Pesa payment integration,
-  and invoice-backed financing — see [Roadmap](#roadmap).
+- **Automated reminders** — sending an invoice schedules a fixed,
+  escalating sequence of payment reminders (before due, on due date,
+  then increasingly firm as it goes overdue), delivered via SMS in
+  the background and logged per-invoice for audit purposes.
+- *(In progress)* M-Pesa payment integration and invoice-backed
+  financing — see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -42,6 +46,7 @@ partner, not with the platform itself.
 | Database | PostgreSQL via [Ecto](https://hexdocs.pm/ecto/) |
 | Authentication | Phone + OTP, [Phoenix.Token](https://hexdocs.pm/phoenix/Phoenix.Token.html) bearer sessions, [bcrypt](https://hexdocs.pm/bcrypt_elixir/) password hashing |
 | SMS | [Africa's Talking](https://africastalking.com/) API |
+| Background jobs | [Oban](https://hexdocs.pm/oban/) (Postgres-backed) |
 | Object storage | S3-compatible via [ExAws](https://hexdocs.pm/ex_aws/) (AWS S3, DigitalOcean Spaces, MinIO, etc.) |
 | Payments *(planned)* | M-Pesa Daraja API |
 
@@ -79,6 +84,7 @@ All endpoints are prefixed `/api`. Authenticated endpoints require an
 | POST | `/invoices/:id/send` | User | Mark an invoice as sent |
 | POST | `/invoices/:id/mark_paid` | User | Mark a sent invoice as paid |
 | POST | `/invoices/:id/cancel` | User | Cancel a draft or sent invoice |
+| GET | `/invoices/:invoice_id/reminders` | User | Reminder history for an invoice |
 | GET | `/admin/kyc_documents/pending` | Admin | Review queue |
 | PATCH | `/admin/kyc_documents/:id` | Admin | Approve/reject a document |
 
@@ -151,6 +157,11 @@ The backend follows a bounded-context structure under `lib/lipaharaka/`:
 - **`Invoicing`** — invoices, line items, and status lifecycle; all
   monetary values use `Decimal`, never floats, and totals are always
   computed server-side from submitted line items
+- **`Reminders`** — schedules and delivers escalating payment
+  reminders via Oban; each reminder re-checks the invoice's live
+  status at send time, so a paid or cancelled invoice's remaining
+  reminders are silently no-ops rather than needing explicit
+  cancellation
 - **`Admin`** — cross-business operations for platform staff (KYC
   review); the one deliberate exception to the rule every other
   context follows of never fetching a record by a raw client-supplied
@@ -170,7 +181,7 @@ business rules and database access.
 - [x] KYC document upload (S3-compatible storage)
 - [x] Admin KYC review
 - [x] Invoicing (create, send, track lifecycle)
-- [ ] Automated payment reminders
+- [x] Automated payment reminders
 - [ ] M-Pesa payment integration (STK Push, C2B, B2C)
 - [ ] Risk scoring and invoice-backed financing
 - [ ] Partner lender integration
