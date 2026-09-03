@@ -35,3 +35,11 @@ config :phoenix, :plug_init_mode, :runtime
 # so test uploads never collide with anything written during dev.
 config :lipaharaka, :storage_adapter, Lipaharaka.Storage.Local
 config :lipaharaka, :local_storage_path, "priv/uploads_test"
+
+# Oban: manual testing mode — jobs are inserted into the database
+# (so we can assert they were enqueued correctly) but never actually
+# picked up and run by a background queue. Tests that need a job's
+# *effect* call the underlying context function directly
+# (Reminders.deliver_reminder/1), not Oban's scheduler — see
+# test/lipaharaka/reminders_test.exs.
+config :lipaharaka, Oban, testing: :manual, queues: false, plugins: false
