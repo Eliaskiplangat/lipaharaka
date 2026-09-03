@@ -68,6 +68,23 @@ defmodule Lipaharaka.Invoicing do
     end
   end
 
+  @doc """
+  Fetches an invoice by id with NO business scoping. This is the one
+  deliberate exception to this module's "never fetch without scoping
+  to a business" rule (see moduledoc) — used exclusively by
+  `Lipaharaka.Reminders.Worker`, a trusted background job that has no
+  "current user" to scope through by nature, since it runs on a
+  schedule rather than in response to a request. Never call this from
+  a controller.
+  """
+  @spec get_invoice_unscoped(String.t()) :: Invoice.t() | nil
+  def get_invoice_unscoped(id) do
+    case Ecto.UUID.cast(id) do
+      {:ok, uuid} -> Repo.get(Invoice, uuid)
+      :error -> nil
+    end
+  end
+
   @doc "Fetches an invoice belonging to the given business, preloaded with line items, or nil."
   @spec get_invoice_for_business(Business.t(), String.t()) :: Invoice.t() | nil
   def get_invoice_for_business(%Business{} = business, id) do
@@ -144,11 +161,21 @@ defmodule Lipaharaka.Invoicing do
     |> Repo.update()
   end
 
-  @doc "Transitions a draft invoice to sent."
+  @doc """
+  Transitions a draft invoice to sent, and schedules its escalating
+  reminder sequence (see `Lipaharaka.Reminders.schedule_reminders_for_invoice/1`).
+  """
   @spec send_invoice(Business.t(), String.t()) ::
           {:ok, Invoice.t()} | {:error, :not_found | :invalid_transition}
   def send_invoice(%Business{} = business, id) do
-    transition(business, id, from: "draft", to: "sent")
+    case transition(business, id, from: "draft", to: "sent") do
+      {:ok, invoice} = result ->
+        Lipaharaka.Reminders.schedule_reminders_for_invoice(invoice)
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
