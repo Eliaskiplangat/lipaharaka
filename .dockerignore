@@ -1,0 +1,7 @@
+_build
+deps
+.git
+.gitignore
+docker-compose.yml
+*.log
+.env
