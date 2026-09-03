@@ -50,6 +50,8 @@ defmodule LipaharakaWeb.Router do
     post "/invoices/:id/send", InvoiceController, :send_invoice
     post "/invoices/:id/mark_paid", InvoiceController, :mark_paid
     post "/invoices/:id/cancel", InvoiceController, :cancel
+
+    get "/invoices/:invoice_id/reminders", ReminderController, :index
   end
 
   scope "/api/admin", LipaharakaWeb do
