@@ -29,6 +29,10 @@ defmodule LipaharakaWeb.Router do
     post "/auth/verify_otp", AuthController, :verify_otp
     post "/auth/resend_otp", AuthController, :resend_otp
     post "/auth/login", AuthController, :login
+
+    # Public — Safaricom calls this directly, cannot present a bearer
+    # token. See LipaharakaWeb.MpesaCallbackController moduledoc.
+    post "/mpesa/callback", MpesaCallbackController, :create
   end
 
   scope "/api", LipaharakaWeb do
@@ -50,6 +54,7 @@ defmodule LipaharakaWeb.Router do
     post "/invoices/:id/send", InvoiceController, :send_invoice
     post "/invoices/:id/mark_paid", InvoiceController, :mark_paid
     post "/invoices/:id/cancel", InvoiceController, :cancel
+    post "/invoices/:id/request_payment", PaymentController, :request_payment
 
     get "/invoices/:invoice_id/reminders", ReminderController, :index
   end
@@ -59,8 +64,5 @@ defmodule LipaharakaWeb.Router do
 
     get "/kyc_documents/pending", Admin.KycDocumentController, :pending
     patch "/kyc_documents/:id", Admin.KycDocumentController, :review
-
-    # A future step will add here: automated collections/reminders
-    # (FR-3.x) and M-Pesa payment integration (FR-4.x).
   end
 end
