@@ -35,8 +35,10 @@ partner, not with the platform itself.
   escalating sequence of payment reminders (before due, on due date,
   then increasingly firm as it goes overdue), delivered via SMS in
   the background and logged per-invoice for audit purposes.
-- *(In progress)* M-Pesa payment integration and invoice-backed
-  financing — see [Roadmap](#roadmap).
+- **M-Pesa payments** — SMEs can trigger a real STK Push prompt to
+  the buyer's phone; Safaricom's payment confirmation automatically
+  marks the invoice paid, no manual step required.
+- *(In progress)* Invoice-backed financing — see [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -47,8 +49,8 @@ partner, not with the platform itself.
 | Authentication | Phone + OTP, [Phoenix.Token](https://hexdocs.pm/phoenix/Phoenix.Token.html) bearer sessions, [bcrypt](https://hexdocs.pm/bcrypt_elixir/) password hashing |
 | SMS | [Africa's Talking](https://africastalking.com/) API |
 | Background jobs | [Oban](https://hexdocs.pm/oban/) (Postgres-backed) |
+| Payments | M-Pesa Daraja API (STK Push, callback-driven reconciliation) |
 | Object storage | S3-compatible via [ExAws](https://hexdocs.pm/ex_aws/) (AWS S3, DigitalOcean Spaces, MinIO, etc.) |
-| Payments *(planned)* | M-Pesa Daraja API |
 
 Elixir/Phoenix was chosen specifically for this domain: the platform's
 heaviest workloads — fanning out reminder notifications, handling
@@ -85,6 +87,8 @@ All endpoints are prefixed `/api`. Authenticated endpoints require an
 | POST | `/invoices/:id/mark_paid` | User | Mark a sent invoice as paid |
 | POST | `/invoices/:id/cancel` | User | Cancel a draft or sent invoice |
 | GET | `/invoices/:invoice_id/reminders` | User | Reminder history for an invoice |
+| POST | `/invoices/:id/request_payment` | User | Trigger an M-Pesa STK Push to the buyer |
+| POST | `/mpesa/callback` | — (Safaricom) | M-Pesa payment result webhook |
 | GET | `/admin/kyc_documents/pending` | Admin | Review queue |
 | PATCH | `/admin/kyc_documents/:id` | Admin | Approve/reject a document |
 
@@ -126,6 +130,7 @@ requires the following environment variables:
 | `PHX_HOST` | Public hostname |
 | `AFRICASTALKING_USERNAME` / `AFRICASTALKING_API_KEY` | SMS |
 | `S3_KYC_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | KYC document storage |
+| `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET`, `MPESA_SHORTCODE`, `MPESA_PASSKEY`, `MPESA_CALLBACK_URL` | M-Pesa payments |
 
 ### Creating an admin user
 
@@ -162,6 +167,12 @@ The backend follows a bounded-context structure under `lib/lipaharaka/`:
   status at send time, so a paid or cancelled invoice's remaining
   reminders are silently no-ops rather than needing explicit
   cancellation
+- **`Payments`** — M-Pesa STK Push requests and callback processing;
+  the only context permitted to look up a record by a bare ID from an
+  external, unauthenticated source (Safaricom's callback identifies a
+  payment only by its checkout ID), and designed to be idempotent —
+  a callback arriving after an invoice was already paid or cancelled
+  by other means is a handled case, not an error
 - **`Admin`** — cross-business operations for platform staff (KYC
   review); the one deliberate exception to the rule every other
   context follows of never fetching a record by a raw client-supplied
@@ -182,7 +193,7 @@ business rules and database access.
 - [x] Admin KYC review
 - [x] Invoicing (create, send, track lifecycle)
 - [x] Automated payment reminders
-- [ ] M-Pesa payment integration (STK Push, C2B, B2C)
+- [x] M-Pesa payment integration (STK Push, callback reconciliation)
 - [ ] Risk scoring and invoice-backed financing
 - [ ] Partner lender integration
 
