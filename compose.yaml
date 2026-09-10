@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    container_name: lipaharaka-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lipaharaka_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lipaharaka_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: eliaskiplangat/lipaharaka:latest
+    container_name: lipaharaka-web
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    command: sh -c "mix ecto.migrate && mix phx.server"
+
+volumes:
+  postgres_data:
