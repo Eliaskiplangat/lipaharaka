@@ -61,10 +61,14 @@ if config_env() == :prod do
     scheme: System.get_env("S3_SCHEME") || "https://",
     region: System.get_env("S3_REGION") || "us-east-1"
 
-  # ## M-Pesa Daraja API credentials (used from Step 4 onward)
-  # config :lipaharaka, :mpesa,
-  #   consumer_key: System.fetch_env!("MPESA_CONSUMER_KEY"),
-  #   consumer_secret: System.fetch_env!("MPESA_CONSUMER_SECRET"),
-  #   shortcode: System.fetch_env!("MPESA_SHORTCODE"),
-  #   passkey: System.fetch_env!("MPESA_PASSKEY")
+  # ## M-Pesa Daraja API credentials — required in production.
+  config :lipaharaka, :mpesa_adapter, Lipaharaka.Mpesa.Daraja
+
+  config :lipaharaka, :mpesa,
+    consumer_key: System.fetch_env!("MPESA_CONSUMER_KEY"),
+    consumer_secret: System.fetch_env!("MPESA_CONSUMER_SECRET"),
+    shortcode: System.fetch_env!("MPESA_SHORTCODE"),
+    passkey: System.fetch_env!("MPESA_PASSKEY"),
+    callback_url: System.fetch_env!("MPESA_CALLBACK_URL"),
+    base_url: System.get_env("MPESA_BASE_URL") || "https://api.safaricom.co.ke"
 end

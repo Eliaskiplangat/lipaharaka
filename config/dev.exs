@@ -4,8 +4,8 @@ import Config
 config :lipaharaka, Lipaharaka.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "demo-postgres",
-  port: 5432,
+  hostname: "127.0.0.1",
+  port: 5433,
   database: "lipaharaka_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
@@ -15,7 +15,7 @@ config :lipaharaka, Lipaharaka.Repo,
 # debugging and code reloading.
 config :lipaharaka, LipaharakaWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
-  http: [ip: {0, 0, 0, 0}, port: 4000],
+  http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
@@ -61,3 +61,19 @@ config :lipaharaka, :local_storage_path, "priv/uploads"
 #   host: "s3.amazonaws.com",  # or e.g. "nyc3.digitaloceanspaces.com" for Spaces
 #   scheme: "https://",
 #   region: "us-east-1"
+
+# M-Pesa defaults to the Test adapter in dev — no Safaricom sandbox
+# account needed to keep developing. Switch to Lipaharaka.Mpesa.Daraja
+# (and fill in :mpesa below) once you have Safaricom sandbox
+# credentials AND a publicly reachable callback URL (e.g. via ngrok —
+# localhost will not work, Safaricom must be able to reach it).
+config :lipaharaka, :mpesa_adapter, Lipaharaka.Mpesa.Test
+
+# config :lipaharaka, :mpesa_adapter, Lipaharaka.Mpesa.Daraja
+# config :lipaharaka, :mpesa,
+#   consumer_key: "your-sandbox-consumer-key",
+#   consumer_secret: "your-sandbox-consumer-secret",
+#   shortcode: "174379",  # Safaricom's standard sandbox test shortcode
+#   passkey: "your-sandbox-passkey",
+#   callback_url: "https://your-ngrok-subdomain.ngrok-free.app/api/mpesa/callback",
+#   base_url: "https://sandbox.safaricom.co.ke"

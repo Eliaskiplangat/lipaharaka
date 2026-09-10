@@ -43,3 +43,7 @@ config :lipaharaka, :local_storage_path, "priv/uploads_test"
 # (Reminders.deliver_reminder/1), not Oban's scheduler — see
 # test/lipaharaka/reminders_test.exs.
 config :lipaharaka, Oban, testing: :manual, queues: false, plugins: false
+
+# M-Pesa uses the Test adapter in test too — no Safaricom credentials
+# or network calls needed for the test suite.
+config :lipaharaka, :mpesa_adapter, Lipaharaka.Mpesa.Test
