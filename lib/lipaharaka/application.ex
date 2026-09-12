@@ -12,6 +12,22 @@ defmodule Lipaharaka.Application do
       Lipaharaka.Repo,
       {Phoenix.PubSub, name: Lipaharaka.PubSub},
       {Oban, Application.fetch_env!(:lipaharaka, Oban)},
+      # These two are the in-memory "Test" adapters for SMS and
+      # M-Pesa. Starting them here, as supervised children, is
+      # deliberate — NOT an oversight of "why are test doubles in
+      # production's supervision tree." They used to be lazily
+      # started on first use from inside whichever process touched
+      # them first, which included individual ExUnit test processes.
+      # Agent.start_link/2 LINKS the caller, so a lazily-started Agent
+      # was accidentally linked to a transient test process — if that
+      # unrelated test process ever crashed, the link took the shared
+      # Agent down with it, breaking every subsequent test that
+      # depended on it. Supervising them from boot means they're
+      # linked to the supervisor instead, immune to unrelated process
+      # crashes. They're harmless, idle processes when the configured
+      # adapter is the real SMS/AfricasTalking or Mpesa/Daraja one.
+      Lipaharaka.SMS.Test,
+      Lipaharaka.Mpesa.Test,
       # Start the endpoint last, once everything else is running
       LipaharakaWeb.Endpoint
     ]
